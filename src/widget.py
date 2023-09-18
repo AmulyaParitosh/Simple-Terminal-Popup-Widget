@@ -1,10 +1,11 @@
 # Copyright (c) 2023 Amulya Paritosh
-# 
+#
 # This software is released under the MIT License.
 # https://opensource.org/licenses/MIT
 
 import contextlib
 import os
+import re
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
@@ -23,7 +24,6 @@ class CommandLineEdit(QLineEdit):
 		font.setPointSize(12)
 		self.setFont(font)
 
-		# with open('/home/encryptedbee/.zsh_history', 'rb') as file:
 		with Config.HISTORY.open('rb') as file:
 			history = set()
 			for line in file:
@@ -37,7 +37,23 @@ class CommandLineEdit(QLineEdit):
 	@staticmethod
 	def executeCommand(command: str) -> None:
 		print("executing:", command)
-		os.system(command)
+		# os.system(command)
+
+	def autoComplete(self):
+		top_txt = self.completer().currentCompletion()
+		curr_words = [word for word in re.split(r"/| |\.", self.text()) if word]
+		sugg_words = [word for word in re.split(r"/| |\.", top_txt) if word]
+
+		next_word = sugg_words[len(curr_words)-1]
+		new_command = re.sub(f"{curr_words[-1]}$", next_word, self.text())
+		self.setText(new_command)
+
+
+	def keyPressEvent(self, event) -> None:
+		if event.key() == Qt.Key.Key_Tab:
+			self.autoComplete()
+		else:
+			super().keyPressEvent(event)
 
 	def onEnterKeyPressed(self) -> None:
 		if not self.text(): return
