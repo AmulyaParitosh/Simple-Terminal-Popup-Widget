@@ -1,7 +1,8 @@
 import contextlib
+import os
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QLineEdit, QCompleter
+from PyQt6.QtWidgets import QCompleter, QLineEdit
 
 
 class OneLineTerminal(QLineEdit):
@@ -9,6 +10,8 @@ class OneLineTerminal(QLineEdit):
 		super().__init__()
 		self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
 		self.resize(400,20)
+
+		self.execute = False
 
 		with open('/home/encryptedbee/.zsh_history', 'rb') as file:
 			history = set()
@@ -27,7 +30,17 @@ class OneLineTerminal(QLineEdit):
 		else:
 			super().keyPressEvent(event)
 
+	@staticmethod
+	def executeCommand(command: str):
+		os.system(command)
+
 	def onEnterKeyPressed(self):
 		if not self.text(): return
-		print(self.text())
+
+		if self.execute:
+			self.executeCommand(self.text())
+			self.execute = False
+		else:
+			self.execute = True
+
 		self.clear()
