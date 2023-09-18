@@ -3,13 +3,17 @@ import os
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QCompleter, QDialog, QHBoxLayout, QLineEdit
-
+from PyQt6.QtGui import QFont
 
 class CommandLineEdit(QLineEdit):
 	def __init__(self) -> None:
 		super().__init__()
 
 		self.execute = False
+
+		font = QFont()
+		font.setPointSize(12)
+		self.setFont(font)
 
 		with open('/home/encryptedbee/.zsh_history', 'rb') as file:
 			history = set()
