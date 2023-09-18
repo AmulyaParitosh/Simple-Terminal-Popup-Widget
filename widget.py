@@ -27,8 +27,8 @@ class CommandLineEdit(QLineEdit):
 
 	@staticmethod
 	def executeCommand(command: str) -> None:
-		# os.system(command)
 		print("executing:", command)
+		os.system(command)
 
 	def onEnterKeyPressed(self) -> None:
 		if not self.text(): return
@@ -36,14 +36,17 @@ class CommandLineEdit(QLineEdit):
 		if self.execute:
 			self.executeCommand(self.text())
 			self.execute = False
+			self.parent().close()
 		else:
 			self.execute = True
 
 		self.clear()
 
 class OneLineTerminal(QDialog):
-	def __init__(self) -> None:
+	def __init__(self, pwd: str) -> None:
 		super().__init__()
+		os.chdir(pwd)
+
 		self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
 		self.resize(400,20)
 
