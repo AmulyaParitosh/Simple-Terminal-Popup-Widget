@@ -15,8 +15,8 @@ from .config import Config
 
 
 class CommandLineEdit(QLineEdit):
-	def __init__(self) -> None:
-		super().__init__()
+	def __init__(self, parent) -> None:
+		super().__init__(parent)
 
 		self.execute = False
 
@@ -28,7 +28,7 @@ class CommandLineEdit(QLineEdit):
 			history = set()
 			for line in file:
 				with contextlib.suppress(Exception):
-					history.add(line.decode('utf-8').rsplit(';',1)[-1].strip())
+					history.add(line.decode(Config.HISTORY_ENCODING).rsplit(';',1)[-1].strip())
 
 		completer = QCompleter(history)
 		self.setCompleter(completer)
@@ -36,16 +36,16 @@ class CommandLineEdit(QLineEdit):
 
 	@staticmethod
 	def executeCommand(command: str) -> None:
-		print("executing:", command)
-		# os.system(command)
+		os.system(command)
 
-	def autoComplete(self):
-		top_txt = self.completer().currentCompletion()
-		curr_words = [word for word in re.split(r"/| |\.", self.text()) if word]
-		sugg_words = [word for word in re.split(r"/| |\.", top_txt) if word]
+	def autoComplete(self) -> None:
+		curr_words: list[str] = [word for word in re.split(Config.SPLIT_REX, self.text()) if word]
 
-		next_word = sugg_words[len(curr_words)-1]
-		new_command = re.sub(f"{curr_words[-1]}$", next_word, self.text())
+		top_txt: str = self.completer().currentCompletion()
+		sugg_words: list[str] = [word for word in re.split(Config.SPLIT_REX, top_txt) if word]
+
+		next_word: str = sugg_words[len(curr_words)-1]
+		new_command: str = re.sub(f"{curr_words[-1]}$", next_word, self.text())
 		self.setText(new_command)
 
 
@@ -77,7 +77,7 @@ class OneLineTerminal(QDialog):
 
 		self.setLayout(QHBoxLayout())
 
-		command_line = CommandLineEdit()
+		command_line = CommandLineEdit(self)
 		self.layout().addWidget(command_line)
 		self.show()
 
