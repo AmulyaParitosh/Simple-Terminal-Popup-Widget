@@ -15,6 +15,19 @@ from .config import Config
 
 
 class Completer(QCompleter):
+
+
+	def __init__(self):
+		with Config.HISTORY.open('rb') as file:
+			history = set()
+			for line in file:
+				with contextlib.suppress(Exception):
+					history.add(line.decode(Config.HISTORY_ENCODING).rsplit(';',1)[-1].strip())
+		super().__init__(history)
+
+		self.setCompletionMode(QCompleter.CompletionMode.InlineCompletion)
+		self.setModelSorting(QCompleter.ModelSorting.CaseInsensitivelySortedModel)
+
 	def event(self, event) -> None:
 		if event.type() == QEvent.Type.KeyPress and event.key() == Qt.Key.Key_Tab:
 			pass
@@ -24,8 +37,6 @@ class CommandLineEdit(QLineEdit):
 	tabPressed = pyqtSignal()
 	def __init__(self, parent) -> None:
 		super().__init__(parent)
-
-		self.execute = False
 
 		self.tabPressed.connect(self.nextWordCompletion)
 
@@ -39,16 +50,13 @@ class CommandLineEdit(QLineEdit):
 				with contextlib.suppress(Exception):
 					history.add(line.decode(Config.HISTORY_ENCODING).rsplit(';',1)[-1].strip())
 
-		completer = Completer(history)
-		completer.setCompletionMode(QCompleter.CompletionMode.InlineCompletion)
-		completer.setModelSorting(QCompleter.ModelSorting.CaseInsensitivelySortedModel)
-
+		completer = Completer()
 		self.setCompleter(completer)
 		self.returnPressed.connect(self.onEnterKeyPressed)
 
 	@staticmethod
 	def executeCommand(command: str) -> None:
-		# os.system(command)
+		os.system(command)
 		print("executing:", command)
 
 	def nextWordCompletion(self) -> None:
@@ -72,15 +80,8 @@ class CommandLineEdit(QLineEdit):
 
 	def onEnterKeyPressed(self) -> None:
 		if not self.text(): return
-
-		if self.execute:
-			self.executeCommand(self.text())
-			self.execute = False
-			self.parent().close()
-		else:
-			self.execute = True
-
-		self.clear()
+		self.executeCommand(self.text())
+		self.parent().close()
 
 class OneLineTerminal(QDialog):
 	def __init__(self) -> None:
