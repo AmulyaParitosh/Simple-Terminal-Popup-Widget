@@ -7,18 +7,27 @@ import contextlib
 import os
 import re
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal, QEvent
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QCompleter, QDialog, QHBoxLayout, QLineEdit
 
 from .config import Config
 
 
+class Completer(QCompleter):
+	def event(self, event) -> None:
+		if event.type() == QEvent.Type.KeyPress and event.key() == Qt.Key.Key_Tab:
+			pass
+
+
 class CommandLineEdit(QLineEdit):
+	tabPressed = pyqtSignal()
 	def __init__(self, parent) -> None:
 		super().__init__(parent)
 
 		self.execute = False
+
+		self.tabPressed.connect(self.nextWordCompletion)
 
 		font = QFont()
 		font.setPointSize(12)
@@ -30,28 +39,34 @@ class CommandLineEdit(QLineEdit):
 				with contextlib.suppress(Exception):
 					history.add(line.decode(Config.HISTORY_ENCODING).rsplit(';',1)[-1].strip())
 
-		completer = QCompleter(history)
+		completer = Completer(history)
+		completer.setCompletionMode(QCompleter.CompletionMode.InlineCompletion)
+		completer.setModelSorting(QCompleter.ModelSorting.CaseInsensitivelySortedModel)
+
 		self.setCompleter(completer)
 		self.returnPressed.connect(self.onEnterKeyPressed)
 
 	@staticmethod
 	def executeCommand(command: str) -> None:
-		os.system(command)
+		# os.system(command)
+		print("executing:", command)
 
-	def autoComplete(self) -> None:
-		curr_words: list[str] = [word for word in re.split(Config.SPLIT_REX, self.text()) if word]
+	def nextWordCompletion(self) -> None:
+		curr_text: str = self.text()[:self.cursorPosition()]
+		curr_words: list[str] = [word for word in re.split(Config.SPLIT_REX, curr_text) if word]
 
 		top_txt: str = self.completer().currentCompletion()
 		sugg_words: list[str] = [word for word in re.split(Config.SPLIT_REX, top_txt) if word]
 
 		next_word: str = sugg_words[len(curr_words)-1]
-		new_command: str = re.sub(f"{curr_words[-1]}$", next_word, self.text())
+		new_command: str = re.sub(f"{curr_words[-1]}$", next_word, curr_text)
 		self.setText(new_command)
 
 
 	def keyPressEvent(self, event) -> None:
 		if event.key() == Qt.Key.Key_Tab:
-			self.autoComplete()
+			# self.nextWordCompletion()
+			self.tabPressed.emit()
 		else:
 			super().keyPressEvent(event)
 
