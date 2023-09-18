@@ -2,8 +2,11 @@ import contextlib
 import os
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QCompleter, QDialog, QHBoxLayout, QLineEdit
 from PyQt6.QtGui import QFont
+from PyQt6.QtWidgets import QCompleter, QDialog, QHBoxLayout, QLineEdit
+
+from .config import Config
+
 
 class CommandLineEdit(QLineEdit):
 	def __init__(self) -> None:
@@ -15,7 +18,8 @@ class CommandLineEdit(QLineEdit):
 		font.setPointSize(12)
 		self.setFont(font)
 
-		with open('/home/encryptedbee/.zsh_history', 'rb') as file:
+		# with open('/home/encryptedbee/.zsh_history', 'rb') as file:
+		with Config.HISTORY.open('rb') as file:
 			history = set()
 			for line in file:
 				with contextlib.suppress(Exception):
@@ -43,9 +47,9 @@ class CommandLineEdit(QLineEdit):
 		self.clear()
 
 class OneLineTerminal(QDialog):
-	def __init__(self, pwd: str) -> None:
+	def __init__(self) -> None:
 		super().__init__()
-		os.chdir(pwd)
+		os.chdir(Config.PWD)
 
 		self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
 		self.resize(400,20)

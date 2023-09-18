@@ -2,8 +2,8 @@ import sys
 
 from PyQt6.QtWidgets import QApplication
 
-from widget import OneLineTerminal
+from src import OneLineTerminal
 
 app = QApplication([])
-terminal = OneLineTerminal("/home/encryptedbee")
+terminal = OneLineTerminal()
 sys.exit(app.exec())
