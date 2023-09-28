@@ -7,7 +7,7 @@ import contextlib
 import os
 import re
 
-from PyQt6.QtCore import Qt, pyqtSignal, QEvent
+from PyQt6.QtCore import QEvent, Qt, pyqtSignal
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QCompleter, QDialog, QHBoxLayout, QLineEdit
 
@@ -15,7 +15,6 @@ from .config import Config
 
 
 class Completer(QCompleter):
-
 
 	def __init__(self):
 		with Config.HISTORY.open('rb') as file:
@@ -35,6 +34,7 @@ class Completer(QCompleter):
 
 class CommandLineEdit(QLineEdit):
 	tabPressed = pyqtSignal()
+
 	def __init__(self, parent) -> None:
 		super().__init__(parent)
 
@@ -44,15 +44,11 @@ class CommandLineEdit(QLineEdit):
 		font.setPointSize(12)
 		self.setFont(font)
 
-		with Config.HISTORY.open('rb') as file:
-			history = set()
-			for line in file:
-				with contextlib.suppress(Exception):
-					history.add(line.decode(Config.HISTORY_ENCODING).rsplit(';',1)[-1].strip())
-
 		completer = Completer()
 		self.setCompleter(completer)
 		self.returnPressed.connect(self.onEnterKeyPressed)
+
+		self.setPlaceholderText("enter the command...")
 
 	@staticmethod
 	def executeCommand(command: str) -> None:
@@ -70,10 +66,8 @@ class CommandLineEdit(QLineEdit):
 		new_command: str = re.sub(f"{curr_words[-1]}$", next_word, curr_text)
 		self.setText(new_command)
 
-
 	def keyPressEvent(self, event) -> None:
 		if event.key() == Qt.Key.Key_Tab:
-			# self.nextWordCompletion()
 			self.tabPressed.emit()
 		else:
 			super().keyPressEvent(event)
@@ -83,13 +77,14 @@ class CommandLineEdit(QLineEdit):
 		self.executeCommand(self.text())
 		self.parent().close()
 
+
 class OneLineTerminal(QDialog):
 	def __init__(self) -> None:
 		super().__init__()
 		os.chdir(Config.PWD)
 
 		self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
-		self.resize(400,20)
+		self.resize(700,20)
 
 		self.setLayout(QHBoxLayout())
 
