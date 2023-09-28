@@ -52,7 +52,7 @@ class CommandLineEdit(QLineEdit):
 
 	@staticmethod
 	def executeCommand(command: str) -> None:
-		os.system(command)
+		# os.system(command)
 		print("executing:", command)
 
 	def nextWordCompletion(self) -> None:
@@ -60,9 +60,11 @@ class CommandLineEdit(QLineEdit):
 		curr_words: list[str] = [word for word in re.split(Config.SPLIT_REX, curr_text) if word]
 
 		top_txt: str = self.completer().currentCompletion()
-		sugg_words: list[str] = [word for word in re.split(Config.SPLIT_REX, top_txt) if word]
+		match: list[str] = re.split(f"({Config.SPLIT_REX})", top_txt)
 
-		next_word: str = sugg_words[len(curr_words)-1]
+		i: int = (len(curr_words)-1)*2
+		next_word: str = match[i] + match[i+1]
+
 		new_command: str = re.sub(f"{curr_words[-1]}$", next_word, curr_text)
 		self.setText(new_command)
 
